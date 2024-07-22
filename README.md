@@ -17,8 +17,10 @@ python unet_mlp_mnist_test.py
 ```
 You can get the pre-trained models on three datasets from [here](https://unimelbcloud-my.sharepoint.com/:f:/g/personal/thingoctramt_student_unimelb_edu_au/EiZwb2o84NdNvzlxCaDulccB8i1Wc_qLiWueJrbMnX2efQ?e=Dpish3)
 # Citation
+```
 @misc{tran2024fibunet,
       title={{FibUnet}: Fibonacci-infused UNet for Video Frame Prediction}, 
       author={Tram Tran},
       year={2024},
 }
+```
