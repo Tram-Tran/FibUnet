@@ -40,6 +40,7 @@ DATASET_NAME = 'movingMNIST'
 LOSS_FUNCTION_NAME = 'mse'
 LOSS_FUNCTION = 'mean_squared_error'
 
+
 def main():
     K.clear_session()
     tf.random.set_seed(RANDOM_SEED)
@@ -57,8 +58,8 @@ def main():
 
     # Split into train and validation sets using indexing.
     indexes = np.arange(dataset.shape[0])
-    train_index = indexes[int(0.1 * dataset.shape[0]) : int(0.9 * dataset.shape[0])] # 80%
-    val_index = indexes[: int(0.1 * dataset.shape[0])] # 10%
+    train_index = indexes[int(0.1 * dataset.shape[0]): int(0.9 * dataset.shape[0])]  # 80%
+    val_index = indexes[: int(0.1 * dataset.shape[0])]  # 10%
     train_dataset = dataset[train_index]
     val_dataset = dataset[val_index]
 
@@ -82,29 +83,35 @@ def main():
     dropout_rate = 0.4
 
     inputs = Input(shape=(input_len,) + INPUT_SHAPE)
-    
+
     x = GaussianNoise(0.1)(inputs)
-    f0, p0 = downsample_block(x, block0_units, block0_kernel, dropout_rate, pooling=False)
+    f0, p0 = downsample_block(
+        x, block0_units, block0_kernel, dropout_rate, pooling=False)
     f1, p1 = downsample_block(p0, block1_units, block1_kernel, dropout_rate)
-    f2, p2 = downsample_block(p1, block2_units, block2_kernel, dropout_rate, pooling=False)
+    f2, p2 = downsample_block(
+        p1, block2_units, block2_kernel, dropout_rate, pooling=False)
     f3, p3 = downsample_block(p2, block3_units, block3_kernel, dropout_rate)
 
     x = Flatten()(p3)
     x = Dense(dense0_units,
               activation='relu',
-              kernel_initializer=RandomNormal(mean=max(-1, -8 / dense0_units), stddev=0.1),
+              kernel_initializer=RandomNormal(
+                  mean=max(-1, -8 / dense0_units), stddev=0.1),
               kernel_regularizer='l1_l2')(x)
     x = Dense(dense1_units,
               activation='relu',
-              kernel_initializer=RandomNormal(mean=max(-1, -8 / dense1_units), stddev=0.1),
+              kernel_initializer=RandomNormal(
+                  mean=max(-1, -8 / dense1_units), stddev=0.1),
               kernel_regularizer='l1_l2')(x)
     x = Dense(dense2_units,
               activation='relu',
-              kernel_initializer=RandomNormal(mean=max(-1, -8 / dense2_units), stddev=0.1),
+              kernel_initializer=RandomNormal(
+                  mean=max(-1, -8 / dense2_units), stddev=0.1),
               kernel_regularizer='l1_l2')(x)
     x = Dense(16 * 16 * block3_units,
               activation='relu',
-              kernel_initializer=RandomNormal(mean=max(-1, -8 / (16 * 16 * block3_units)), stddev=0.1),
+              kernel_initializer=RandomNormal(
+                  mean=max(-1, -8 / (16 * 16 * block3_units)), stddev=0.1),
               kernel_regularizer='l1_l2')(x)
     x = Reshape((16, 16, block3_units))(x)
     x = BatchNormalization()(x)
@@ -119,26 +126,34 @@ def main():
     f2_shape = tf.shape(f2)
     f3_shape = tf.shape(f3)
 
-    f0 = tf.reshape(f0, shape=(f0_shape[0], f0_shape[1], f0_shape[2], f0_shape[3] * f0_shape[4]))
-    f1 = tf.reshape(f1, shape=(f1_shape[0], f1_shape[1], f1_shape[2], f1_shape[3] * f1_shape[4]))
-    f2 = tf.reshape(f2, shape=(f2_shape[0], f2_shape[1], f2_shape[2], f2_shape[3] * f2_shape[4]))
-    f3 = tf.reshape(f3, shape=(f3_shape[0], f3_shape[1], f3_shape[2], f3_shape[3] * f3_shape[4]))
+    f0 = tf.reshape(f0, shape=(
+        f0_shape[0], f0_shape[1], f0_shape[2], f0_shape[3] * f0_shape[4]))
+    f1 = tf.reshape(f1, shape=(
+        f1_shape[0], f1_shape[1], f1_shape[2], f1_shape[3] * f1_shape[4]))
+    f2 = tf.reshape(f2, shape=(
+        f2_shape[0], f2_shape[1], f2_shape[2], f2_shape[3] * f2_shape[4]))
+    f3 = tf.reshape(f3, shape=(
+        f3_shape[0], f3_shape[1], f3_shape[2], f3_shape[3] * f3_shape[4]))
 
     f0 = BatchNormalization()(f0)
     f1 = BatchNormalization()(f1)
     f2 = BatchNormalization()(f2)
     f3 = BatchNormalization()(f3)
 
-    x = upsample_block(x, f3, block3_units, block3_kernel, dropout_rate, duplicated=input_len)
-    x = upsample_block(x, f2, block2_units, block2_kernel, dropout_rate, duplicated=input_len, pooling=False)
-    x = upsample_block(x, f1, block1_units, block1_kernel, dropout_rate, duplicated=input_len)
-    x = upsample_block(x, f0, block0_units, block0_kernel, dropout_rate, duplicated=input_len, pooling=False)
+    x = upsample_block(x, f3, block3_units, block3_kernel,
+                       dropout_rate, duplicated=input_len)
+    x = upsample_block(x, f2, block2_units, block2_kernel,
+                       dropout_rate, duplicated=input_len, pooling=False)
+    x = upsample_block(x, f1, block1_units, block1_kernel,
+                       dropout_rate, duplicated=input_len)
+    x = upsample_block(x, f0, block0_units, block0_kernel,
+                       dropout_rate, duplicated=input_len, pooling=False)
 
     x = x * (1/51.0)
     x = Conv2D(1, kernel_size=3, padding='same', activation='sigmoid')(x)
     x = x * 255
     x = Reshape((1,) + INPUT_SHAPE)(x)
-    
+
     model = Model(inputs=inputs, outputs=x, name=f'unet_mlp_mnist')
     model.summary()
 
@@ -165,10 +180,12 @@ def main():
     print("==================================================")
     print("Training model")
     if TAKE > 0:
-        print(f'Loading weights from {dataset_path}/weights/{WEIGHTS_FILENAME}')
+        print(
+            f'Loading weights from {dataset_path}/weights/{WEIGHTS_FILENAME}')
         model.load_weights(dataset_path + '/weights/' + WEIGHTS_FILENAME)
     model.compile(loss=LOSS_FUNCTION,
-                  optimizer=optimizers.Adam(learning_rate=LEARNING_RATE, beta_1=BETA, clipvalue=CLIP_VALUE),
+                  optimizer=optimizers.Adam(
+                      learning_rate=LEARNING_RATE, beta_1=BETA, clipvalue=CLIP_VALUE),
                   metrics=['accuracy'])
 
     callbacks = [ReduceLROnPlateau(monitor=EARLY_STOPPING_MONITOR,
@@ -193,7 +210,7 @@ def main():
                         validation_data=val_generator,
                         callbacks=callbacks,
                         use_multiprocessing=True)
-    
+
     model.save_weights(filepath + '.final.h5')
     np.save(dataset_path + '/history.npy', history.history)
 
@@ -205,6 +222,7 @@ def main():
                  x_title='Epochs',
                  train_legend='Train loss',
                  test_legend='Validation loss')
-    
+
+
 if __name__ == "__main__":
     main()
