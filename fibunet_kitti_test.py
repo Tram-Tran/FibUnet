@@ -17,7 +17,7 @@ from unet_mlp import fibonacci, HklDataGenerator, downsample_block, upsample_blo
 RANDOM_SEED = 1
 
 TAKE = 0
-WEIGHTS_FILENAME = f'unet_mlp_1.7.1f5_0.final.h5'
+WEIGHTS_FILENAME = f'unet_mlp_2.5f5_0.final.h5'
 
 BATCH_SIZE = 32
 LEARNING_RATE = 1e-3
@@ -26,10 +26,10 @@ CLIP_VALUE = 2000
 
 INPUT_LENGTH = 21
 OUTPUT_INDEX = 25
-INPUT_SHAPE = (60, 80, 1)
+INPUT_SHAPE = (64, 80, 3)
 MAX_PIXEL = 255.0
 
-DATASET_NAME = 'KTHaction'
+DATASET_NAME = 'KITTI'
 LOSS_FUNCTION_NAME = 'mse'
 LOSS_FUNCTION = 'mean_squared_error'
 
@@ -40,7 +40,7 @@ def evaluate():
     K.clear_session()
     tf.random.set_seed(RANDOM_SEED)
 
-    dataset_path = DATASET_NAME
+    dataset_path = 'CaltechPeds'
     if not os.path.exists(dataset_path):
         os.mkdir(dataset_path)
     if not os.path.exists(dataset_path + '/weights'):
@@ -94,12 +94,12 @@ def evaluate():
               kernel_initializer=RandomNormal(
                   mean=max(-1, -8 / dense2_units), stddev=0.1),
               kernel_regularizer='l1_l2')(x)
-    x = Dense(15 * 20 * block3_units,
+    x = Dense(16 * 20 * block3_units,
               activation='relu',
               kernel_initializer=RandomNormal(
                   mean=max(-1, -8 / (8 * 8 * block3_units)), stddev=0.1),
               kernel_regularizer='l1_l2')(x)
-    x = Reshape((15, 20, block3_units))(x)
+    x = Reshape((16, 20, block3_units))(x)
     x = BatchNormalization()(x)
 
     f0 = tf.transpose(f0, [0, 2, 3, 1, 4])
@@ -121,6 +121,11 @@ def evaluate():
     f3 = tf.reshape(f3, shape=(
         f3_shape[0], f3_shape[1], f3_shape[2], f3_shape[3] * f3_shape[4]))
 
+    f0 = BatchNormalization()(f0)
+    f1 = BatchNormalization()(f1)
+    f2 = BatchNormalization()(f2)
+    f3 = BatchNormalization()(f3)
+
     x = upsample_block(x, f3, block3_units, block3_kernel,
                        dropout_rate, duplicated=input_len)
     x = upsample_block(x, f2, block2_units, block2_kernel,
@@ -134,13 +139,13 @@ def evaluate():
     x = relu(x, max_value=MAX_PIXEL)
     x = Reshape((1,) + INPUT_SHAPE)(x)
 
-    model = Model(inputs=inputs, outputs=x, name=f'unet_mlp_kth')
+    model = Model(inputs=inputs, outputs=x, name=f'unet_mlp_kitti')
     model.summary()
 
     print("==================================================")
     print("Slicing data")
-    test_file = os.path.join(dataset_path, 'X_test_mini.hkl')
-    test_sources = os.path.join(dataset_path, 'sources_test_mini.hkl')
+    test_file = os.path.join(dataset_path, 'X_test.hkl')
+    test_sources = os.path.join(dataset_path, 'sources_test.hkl')
 
     with tf.device("CPU"):
         test_generator = HklDataGenerator(test_file,
@@ -192,7 +197,7 @@ def evaluate():
     print("SSIM: ", ssims)
     print("PSNR: ", psnrs)
 
-    idx = 303
+    idx = 0
     for i in range(5):
         imshow_frames(x_test[idx], save_to=dataset_path +
                       f'/images/test{idx}_input.png')

@@ -14,12 +14,12 @@ from keras.initializers import RandomNormal
 from keras.callbacks import ModelCheckpoint, EarlyStopping, CSVLogger, ReduceLROnPlateau
 from keras.activations import relu
 
-from unet_mlp import allocate_gpu_growth, fibonacci, HklDataGenerator, downsample_block, upsample_block, PredictionCallback
+from unet_mlp import fibonacci, HklDataGenerator, downsample_block, upsample_block, PredictionCallback
 
 RANDOM_SEED = 1
 
 TAKE = 0
-WEIGHTS_FILENAME = f'unet_mlp_1.7.1f5_0.final.h5'
+WEIGHTS_FILENAME = f'unet_mlp_2.5f5_0.final.h5'
 
 BATCH_SIZE = 32
 EPOCHS = 1000
@@ -33,14 +33,14 @@ MIN_LR = LEARNING_RATE * 1e-2
 
 INPUT_LENGTH = 21
 OUTPUT_INDEX = 25
-INPUT_SHAPE = (60, 80, 1)
+INPUT_SHAPE = (64, 80, 3)
 MAX_PIXEL = 255.0
 
 EARLY_STOPPING_MONITOR = 'val_loss'
 EARLY_STOPPING_PATIENCE = 20
 EARLY_STOPPING_MIN_DELTA = 1e-12
 
-DATASET_NAME = 'KTHaction'
+DATASET_NAME = 'KITTI'
 LOSS_FUNCTION_NAME = 'mse'
 LOSS_FUNCTION = 'mean_squared_error'
 
@@ -48,8 +48,6 @@ LOSS_FUNCTION = 'mean_squared_error'
 def main():
     K.clear_session()
     tf.random.set_seed(RANDOM_SEED)
-    # K.set_floatx('float64')
-    allocate_gpu_growth()
 
     dataset_path = DATASET_NAME
     if not os.path.exists(dataset_path):
@@ -109,13 +107,13 @@ def main():
                   mean=max(-1, -8 / dense2_units), stddev=0.1),
               kernel_regularizer='l1_l2',
               dtype='float32')(x)
-    x = Dense(15 * 20 * block3_units,
+    x = Dense(16 * 20 * block3_units,
               activation='relu',
               kernel_initializer=RandomNormal(
                   mean=max(-1, -8 / (8 * 8 * block3_units)), stddev=0.1),  # don't change this mean
               kernel_regularizer='l1_l2',
               dtype='float32')(x)
-    x = Reshape((15, 20, block3_units), dtype='float32')(x)
+    x = Reshape((16, 20, block3_units), dtype='float32')(x)
     x = BatchNormalization(dtype='float32')(x)
 
     f0 = tf.transpose(f0, [0, 2, 3, 1, 4])
@@ -137,10 +135,14 @@ def main():
     f3 = tf.reshape(f3, shape=(
         f3_shape[0], f3_shape[1], f3_shape[2], f3_shape[3] * f3_shape[4]))
 
-    f0 = GaussianNoise(1e-3 * MAX_PIXEL, dtype='float32')(f0)
-    f1 = GaussianNoise(1e-3 * MAX_PIXEL, dtype='float32')(f1)
-    f2 = GaussianNoise(1e-3 * MAX_PIXEL, dtype='float32')(f2)
-    f3 = GaussianNoise(1e-3 * MAX_PIXEL, dtype='float32')(f3)
+    f0 = BatchNormalization()(f0)
+    f1 = BatchNormalization()(f1)
+    f2 = BatchNormalization()(f2)
+    f3 = BatchNormalization()(f3)
+    # f0 = GaussianNoise(1e-3 * MAX_PIXEL, dtype='float32')(f0)
+    # f1 = GaussianNoise(1e-3 * MAX_PIXEL, dtype='float32')(f1)
+    # f2 = GaussianNoise(1e-3 * MAX_PIXEL, dtype='float32')(f2)
+    # f3 = GaussianNoise(1e-3 * MAX_PIXEL, dtype='float32')(f3)
 
     x = upsample_block(x, f3, block3_units, block3_kernel,
                        dropout_rate, duplicated=input_len)
@@ -156,7 +158,7 @@ def main():
     x = relu(x, max_value=MAX_PIXEL)
     x = Reshape((1,) + INPUT_SHAPE, dtype='float32')(x)
 
-    model = Model(inputs=inputs, outputs=x, name=f'unet_mlp_kth')
+    model = Model(inputs=inputs, outputs=x, name=f'unet_mlp_kitti')
     model.summary()
 
     print("==================================================")
@@ -164,8 +166,8 @@ def main():
     train_file = os.path.join(dataset_path, 'X_train_augmented.hkl')
     train_source = os.path.join(
         dataset_path, 'sources_train_augmented.hkl')
-    val_file = os.path.join(dataset_path, 'X_val.hkl')
-    val_sources = os.path.join(dataset_path, 'sources_val.hkl')
+    val_file = os.path.join(dataset_path, 'X_val_test.hkl')
+    val_sources = os.path.join(dataset_path, 'sources_val_test.hkl')
 
     with tf.device("CPU"):
         train_generator = HklDataGenerator(train_file,
@@ -211,8 +213,7 @@ def main():
                                    min_lr=MIN_LR),
                  CSVLogger(dataset_path + '/history.csv', append=True)]
 
-    filepath = dataset_path + \
-        '/weights/' + model.name + '_' + str(TAKE)
+    filepath = dataset_path + '/weights/' + model.name + '_' + str(TAKE)
     checkpoint = ModelCheckpoint(filepath=filepath + '.{epoch:04d}.h5',
                                  save_freq=int(STEPS_PER_EPOCH * 10),
                                  save_weights_only=True)
@@ -226,6 +227,7 @@ def main():
                                         first_training_batch_x[-1:],
                                         first_training_batch_y[-1:],
                                         save_folder=dataset_path + '/images/',
+                                        cmap=None,
                                         dtype='float32'))
 
     history = model.fit(train_generator,
@@ -240,7 +242,7 @@ def main():
     save_history(history.history['loss'],
                  history.history['val_loss'],
                  dataset_path + '/images/training_loss.png',
-                 'UNET + MLP trained on KTH Action training loss',
+                 'UNET + MLP trained on KITTI training loss',
                  y_title=LOSS_FUNCTION_NAME.upper(),
                  x_title='Epochs',
                  train_legend='Train loss',
