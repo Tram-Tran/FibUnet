@@ -7,15 +7,15 @@ A video prediction model employing Convolutional Neural Networks, Multi-layer Pe
 ```
 python -m pip install -r requirements.txt
 ```
-3. Train the model
+3. Train the model on the Moving MNIST dataset
 ```
-python unet_mlp_mnist.py
+python fibunet_mnist.py
 ```
 4. Test the model on the Moving MNIST dataset
 ```
-python unet_mlp_mnist_test.py
+python fibunet_mnist_test.py
 ```
-You can get the pre-trained models on three datasets from [here](https://unimelbcloud-my.sharepoint.com/:f:/g/personal/thingoctramt_student_unimelb_edu_au/EiZwb2o84NdNvzlxCaDulccB8i1Wc_qLiWueJrbMnX2efQ?e=Dpish3)
+Prediction interval is controlled by the variable `OUTPUT_INDEX` at the top of training and testing files. Pre-trained models on three datasets can be downloaded from [here](https://unimelbcloud-my.sharepoint.com/:f:/g/personal/thingoctramt_student_unimelb_edu_au/EiZwb2o84NdNvzlxCaDulccB8i1Wc_qLiWueJrbMnX2efQ?e=Dpish3).
 # Citation
 ```
 @misc{tran2024fibunet,
