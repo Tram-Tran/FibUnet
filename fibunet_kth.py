@@ -23,6 +23,7 @@ WEIGHTS_FILENAME = f'unet_mlp_1.7.1f5_0.final.h5'
 
 BATCH_SIZE = 32
 EPOCHS = 1000
+STEPS_PER_EPOCH = 2000
 LEARNING_RATE = 1e-3
 BETA = 0.9
 CLIP_VALUE = 2000
@@ -217,7 +218,7 @@ def main():
     filepath = dataset_path + \
         '/weights/' + model.name + '_' + str(TAKE)
     checkpoint = ModelCheckpoint(filepath=filepath + '.{epoch:04d}.h5',
-                                 save_freq=20000,
+                                 save_freq=int(STEPS_PER_EPOCH * 10),
                                  save_weights_only=True)
     callbacks.append(checkpoint)
     early_stopping = EarlyStopping(monitor=EARLY_STOPPING_MONITOR,
@@ -233,7 +234,7 @@ def main():
 
     history = model.fit(train_generator,
                         epochs=EPOCHS,
-                        steps_per_epoch=2000,
+                        steps_per_epoch=STEPS_PER_EPOCH,
                         validation_data=val_generator,
                         callbacks=callbacks)
 
