@@ -5,7 +5,7 @@ from keras.preprocessing.image import Iterator
 
 from keras.layers import Input
 from keras.layers import Conv2D, Conv2DTranspose
-from keras.layers import Dropout, MaxPool2D, UpSampling2D, TimeDistributed, Concatenate, Add, ReLU
+from keras.layers import Dropout, MaxPool2D, UpSampling2D, TimeDistributed, Concatenate
 from keras.models import Model
 from keras.initializers import RandomNormal
 from keras.callbacks import Callback
@@ -26,6 +26,8 @@ def allocate_gpu_growth():
         except RuntimeError as e:
             # Memory growth must be set before GPUs have been initialized
             print(e)
+
+# get a list of Fibonacci numbers
 
 
 def fibonacci(n):
@@ -92,78 +94,7 @@ def upsample_block(x, conv_features, n_filters, kernel_size, dropout=0.0, duplic
 
     return x
 
-
-def residual_block(input_shape, filters, kernel_size, kernel_regularizer=None):
-    input = Input(shape=input_shape)
-    # build x with the same number of filters
-    x = Conv2D(filters,
-               kernel_size=1,
-               activation='relu',
-               padding='same',
-               kernel_initializer=RandomNormal(
-                   mean=max(-1, -8 / filters), stddev=0.1),
-               kernel_regularizer=kernel_regularizer)(input)
-
-    # build f(x) with the same number of filters
-    fx = Conv2D(filters,
-                kernel_size,
-                activation='relu',
-                padding='same',
-                kernel_initializer=RandomNormal(
-                    mean=max(-1, -8 / filters), stddev=0.1),
-                kernel_regularizer=kernel_regularizer)(input)
-    fx = Conv2D(filters,
-                kernel_size,
-                activation='relu',
-                padding='same',
-                kernel_initializer=RandomNormal(
-                    mean=max(-1, -8 / filters), stddev=0.1),
-                kernel_regularizer=kernel_regularizer)(fx)
-    output = Add()([fx, x])
-    output = ReLU()(output)
-
-    return Model(input, output)
-
-
-def downsample_res_block(x, n_filters, kernel_size, dropout=0.0, pooling=True):
-    f = TimeDistributed(residual_block(input_shape=x.shape[2:],
-                                       filters=n_filters,
-                                       kernel_size=kernel_size,
-                                       kernel_regularizer='l1_l2'))(x)
-    if pooling:
-        p = TimeDistributed(MaxPool2D(2, padding='same'))(f)
-    else:
-        p = f
-    p = Dropout(dropout)(p)
-
-    return f, p
-
-
-def upsample_res_block(x, conv_features, n_filters, kernel_size, dropout=0.0, duplicated=1, pooling=True):
-    x = Conv2DTranspose(n_filters,
-                        kernel_size,
-                        activation='relu',
-                        padding='same',
-                        kernel_initializer=RandomNormal(
-                            mean=max(-1, -8 / n_filters), stddev=0.1),
-                        kernel_regularizer='l1_l2')(x)
-    if pooling:
-        x = UpSampling2D(2)(x)
-
-    if conv_features != None:
-        if duplicated > 1:
-            x = tf.repeat(x, repeats=duplicated, axis=-1)
-        x = Concatenate()([x, conv_features])
-
-    x = residual_block(input_shape=x.shape[1:],
-                       filters=n_filters,
-                       kernel_size=kernel_size,
-                       kernel_regularizer='l1_l2')(x)
-    x = Dropout(dropout)(x)
-
-    return x
-
-# Data generator that creates sequences for input into Unet.
+# Data generator that creates sequences for input into FibUnet.
 
 
 class DataGenerator(Iterator):
@@ -241,7 +172,7 @@ class DataGenerator(Iterator):
 
         return (Xs / self.pixel_scale), (Ys / self.pixel_scale)
 
-# Data generator that creates sequences from KITTI for input into Unet.
+# Data generator that creates sequences from KTH Action for input into FibUnet.
 
 
 class HklDataGenerator(Iterator):

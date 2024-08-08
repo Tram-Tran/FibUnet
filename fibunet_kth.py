@@ -14,7 +14,7 @@ from keras.initializers import RandomNormal
 from keras.callbacks import ModelCheckpoint, EarlyStopping, CSVLogger, ReduceLROnPlateau
 from keras.activations import relu
 
-from unet_mlp import allocate_gpu_growth, fibonacci, HklDataGenerator, downsample_block, upsample_block, PredictionCallback
+from unet_mlp import fibonacci, HklDataGenerator, downsample_block, upsample_block, PredictionCallback
 
 RANDOM_SEED = 1
 
@@ -48,8 +48,6 @@ LOSS_FUNCTION = 'mean_squared_error'
 def main():
     K.clear_session()
     tf.random.set_seed(RANDOM_SEED)
-    # K.set_floatx('float64')
-    allocate_gpu_growth()
 
     dataset_path = DATASET_NAME
     if not os.path.exists(dataset_path):
@@ -81,6 +79,7 @@ def main():
     inputs = Input(shape=(input_len,) + INPUT_SHAPE)
 
     x = GaussianNoise(1e-3 * MAX_PIXEL, dtype='float32')(inputs)
+    # Encoding path
     f0, p0 = downsample_block(
         x, block0_units, block0_kernel, dropout_rate, pooling=False)
     f1, p1 = downsample_block(
@@ -90,6 +89,7 @@ def main():
     f3, p3 = downsample_block(
         p2, block3_units, block3_kernel, dropout_rate)
 
+    # Bottleneck
     x = Flatten(dtype='float32')(p3)
     x = Dense(dense0_units,
               activation='relu',
@@ -118,6 +118,7 @@ def main():
     x = Reshape((15, 20, block3_units), dtype='float32')(x)
     x = BatchNormalization(dtype='float32')(x)
 
+    # Tranpose function
     f0 = tf.transpose(f0, [0, 2, 3, 1, 4])
     f1 = tf.transpose(f1, [0, 2, 3, 1, 4])
     f2 = tf.transpose(f2, [0, 2, 3, 1, 4])
@@ -142,6 +143,7 @@ def main():
     f2 = GaussianNoise(1e-3 * MAX_PIXEL, dtype='float32')(f2)
     f3 = GaussianNoise(1e-3 * MAX_PIXEL, dtype='float32')(f3)
 
+    # Decoding path
     x = upsample_block(x, f3, block3_units, block3_kernel,
                        dropout_rate, duplicated=input_len)
     x = upsample_block(x, f2, block2_units, block2_kernel,

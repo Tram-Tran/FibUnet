@@ -85,6 +85,7 @@ def main():
     inputs = Input(shape=(input_len,) + INPUT_SHAPE)
 
     x = GaussianNoise(0.1)(inputs)
+    # Encoding path
     f0, p0 = downsample_block(
         x, block0_units, block0_kernel, dropout_rate, pooling=False)
     f1, p1 = downsample_block(p0, block1_units, block1_kernel, dropout_rate)
@@ -92,6 +93,7 @@ def main():
         p1, block2_units, block2_kernel, dropout_rate, pooling=False)
     f3, p3 = downsample_block(p2, block3_units, block3_kernel, dropout_rate)
 
+    # Bottleneck
     x = Flatten()(p3)
     x = Dense(dense0_units,
               activation='relu',
@@ -116,6 +118,7 @@ def main():
     x = Reshape((16, 16, block3_units))(x)
     x = BatchNormalization()(x)
 
+    # Tranpose function
     f0 = tf.transpose(f0, [0, 2, 3, 1, 4])
     f1 = tf.transpose(f1, [0, 2, 3, 1, 4])
     f2 = tf.transpose(f2, [0, 2, 3, 1, 4])
@@ -140,6 +143,7 @@ def main():
     f2 = BatchNormalization()(f2)
     f3 = BatchNormalization()(f3)
 
+    # Decoding path
     x = upsample_block(x, f3, block3_units, block3_kernel,
                        dropout_rate, duplicated=input_len)
     x = upsample_block(x, f2, block2_units, block2_kernel,
