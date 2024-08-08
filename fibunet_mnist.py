@@ -1,3 +1,30 @@
+'''
+FibUnet: Fibonacci-infused UNet for Video Frame Prediction
+A video prediction model employing Convolutional Neural Networks, Multi-layer Perceptrons coupled with a Fibonacci-infusing rule to address one-frame prediction problem.
+
+Variables for training the model
+
+RANDOM_SEED             : random seed for shuffling training data and initialising model weights
+TAKE                    : used to control training process, if TAKE > 0, the initial weights are loaded from WEIGHTS_FILENAME
+WEIGHTS_FILENAME        : file containing weights for initialising model
+BATCH_SIZE              : training batch size
+EPOCHS                  : number of training epochs
+LEARNING_RATE           : initial learning rate
+BETA                    : Adam optimiser's first exponential decay rate
+CLIP_VALUE              : maximum value for clipping gradients during training
+REDUCE_LR_FACTOR        : the factor for reducing learning rate when a metric has stopped improving
+REDUCE_LR_PATIENCE      : the number of epochs not witnessing an improvement in metric before reducing learning rate
+INPUT_LENGTH            : length of input sequences
+OUTPUT_INDEX            : predicted-frame index
+INPUT_SHAPE             : input shape, raw data is scaled to this size before inputting into model
+EARLY_STOPPING_MONITOR  : the metric used for ReduceLROnPlateau and EarlyStopping
+EARLY_STOPPING_PATIENCE : the number of epochs not witnessing an improvement in metric before the training stops
+EARLY_STOPPING_MIN_DELTA: the amount of metric improvement required to keep training
+DATASET_NAME            : dataset used for training
+LOSS_FUNCTION_NAME      : the loss function used for calculating prediction errors (acronym)
+LOSS_FUNCTION           : the loss function used for calculating prediction errors
+'''
+
 import os
 import numpy as np
 import tensorflow as tf

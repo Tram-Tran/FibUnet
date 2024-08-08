@@ -1,3 +1,24 @@
+'''
+FibUnet: Fibonacci-infused UNet for Video Frame Prediction
+A video prediction model employing Convolutional Neural Networks, Multi-layer Perceptrons coupled with a Fibonacci-infusing rule to address one-frame prediction problem.
+
+Variables for testing the model
+
+RANDOM_SEED             : random seed for shuffling data
+WEIGHTS_FILENAME        : file containing weights of saved model
+BATCH_SIZE              : testing batch size
+LEARNING_RATE           : initial learning rate
+BETA                    : Adam optimiser's first exponential decay rate
+CLIP_VALUE              : maximum value for clipping gradients during training
+INPUT_LENGTH            : length of input sequences
+OUTPUT_INDEX            : predicted-frame index
+INPUT_SHAPE             : input shape, raw data is scaled to this size before inputting into model
+MAX_PIXEL               : maximum pixel value of inputs, 255 if 8bit images, 1.0 if float images
+DATASET_NAME            : test dataset
+LOSS_FUNCTION_NAME      : the loss function used for calculating prediction errors (acronym)
+LOSS_FUNCTION           : the loss function used for calculating prediction errors
+'''
+
 from utils import imshow_frames, mean_psnr, mean_ssim
 import os
 import numpy as np
@@ -16,7 +37,6 @@ from unet_mlp import fibonacci, HklDataGenerator, downsample_block, upsample_blo
 
 RANDOM_SEED = 1
 
-TAKE = 0
 WEIGHTS_FILENAME = f'unet_mlp_1.7.1f5_0.final.h5'
 
 BATCH_SIZE = 32

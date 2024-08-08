@@ -1,3 +1,23 @@
+'''
+FibUnet: Fibonacci-infused UNet for Video Frame Prediction
+A video prediction model employing Convolutional Neural Networks, Multi-layer Perceptrons coupled with a Fibonacci-infusing rule to address one-frame prediction problem.
+
+Variables for testing the model
+
+RANDOM_SEED             : random seed for shuffling data
+WEIGHTS_FILENAME        : file containing weights of saved model
+BATCH_SIZE              : testing batch size
+LEARNING_RATE           : initial learning rate
+BETA                    : Adam optimiser's first exponential decay rate
+CLIP_VALUE              : maximum value for clipping gradients during training
+INPUT_LENGTH            : length of input sequences
+OUTPUT_INDEX            : predicted-frame index
+INPUT_SHAPE             : input shape, raw data is scaled to this size before inputting into model
+DATASET_NAME            : test dataset
+LOSS_FUNCTION_NAME      : the loss function used for calculating prediction errors (acronym)
+LOSS_FUNCTION           : the loss function used for calculating prediction errors
+'''
+
 import os
 import numpy as np
 import tensorflow as tf
