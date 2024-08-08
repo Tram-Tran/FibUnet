@@ -46,6 +46,15 @@ def fibonacci(n):
         output = list(range(output[0])) + output
         return output
 
+# get m random numbers from 0 to n - 1
+
+
+def random_indices(n, m):
+    assert str(n).isdigit() and n > 0, 'Invalid input'
+    assert str(m).isdigit() and m > 0, 'Invalid input'
+
+    return np.random.choice(n, m, replace=False)
+
 
 def downsample_block(x, n_filters, kernel_size, dropout=0.0, pooling=True):
     f = TimeDistributed(Conv2D(n_filters,
